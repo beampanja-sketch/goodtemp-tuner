@@ -308,6 +308,41 @@
     letter-spacing: 0.1em;
   }
 
+  /* SIGN TOGGLE BUTTON (for negative temperatures on mobile) */
+  .sign-btn {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    min-width: 44px;
+    height: 32px;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 0 10px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    transition: all 0.15s;
+  }
+
+  .sign-btn:active {
+    transform: scale(0.95);
+    background: var(--amber);
+    color: white;
+    border-color: var(--amber);
+  }
+
+  .sign-btn.is-negative {
+    background: var(--bad);
+    color: white;
+    border-color: var(--bad);
+  }
+
   /* RESULTS */
   .results {
     display: grid;
@@ -629,11 +664,13 @@
   <div class="input-grid">
     <div class="input-cell low">
       <div class="label"><span class="dot-marker"></span>ออกคอยล์เย็น</div>
+      <button type="button" class="sign-btn" data-target="evapTemp">±</button>
       <input type="number" inputmode="decimal" id="evapTemp" placeholder="0" step="any" />
       <div class="unit" id="evapUnit">°C</div>
     </div>
     <div class="input-cell high">
       <div class="label"><span class="dot-marker"></span>ออกคอยล์ร้อน</div>
+      <button type="button" class="sign-btn" data-target="condTemp">±</button>
       <input type="number" inputmode="decimal" id="condTemp" placeholder="0" step="any" />
       <div class="unit" id="condUnit">°C</div>
     </div>
@@ -860,7 +897,35 @@
     els[key].addEventListener('input', () => {
       const v = els[key].value;
       state[key] = v === '' ? null : parseFloat(v);
+      // Update is-negative class on sign button if exists
+      const btn = document.querySelector(`.sign-btn[data-target="${key}"]`);
+      if (btn) {
+        btn.classList.toggle('is-negative', state[key] !== null && state[key] < 0);
+      }
       update();
+    });
+  });
+
+  // Sign toggle buttons (for negative temperatures)
+  document.querySelectorAll('.sign-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.dataset.target;
+      const input = document.getElementById(targetId);
+      const current = input.value.trim();
+
+      if (current === '' || current === '-') {
+        // Empty or just "-" → insert/remove "-" prefix
+        input.value = current === '-' ? '' : '-';
+      } else {
+        const num = parseFloat(current);
+        if (!isNaN(num)) {
+          input.value = String(-num);
+        }
+      }
+
+      // Trigger input event so update() runs
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.focus();
     });
   });
 
@@ -870,6 +935,7 @@
       els[key].value = '';
       state[key] = null;
     });
+    document.querySelectorAll('.sign-btn').forEach(b => b.classList.remove('is-negative'));
     update();
   });
 
