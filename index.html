@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>GOODTEMP TUNER / เครื่องมือตรวจระบบแอร์</title>
+
+<!-- SEO + sharing -->
+<meta name="description" content="GOODTEMP TUNER — เครื่องมือช่างแอร์รถยนต์และรถห้องเย็น คำนวณ Subcool/Superheat ช่วยปรับวาล์ว TXV และเช็คปริมาณน้ำยา รองรับ R-134a และ R-404A">
+
+<!-- Open Graph (Line, Facebook, Messenger preview) -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="GOODTEMP TUNER">
+<meta property="og:description" content="เครื่องมือช่างแอร์ • เช็คน้ำยา + วาล์ว TXV จากค่า SC/SH • R-134a และ R-404A">
+<meta property="og:locale" content="th_TH">
+
+<!-- Theme + iOS home screen support -->
+<meta name="theme-color" content="#1e3a8a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="GOODTEMP">
+<meta name="mobile-web-app-capable" content="yes">
+
+<!-- Inline SVG favicon (no external file needed) -->
+<link rel="icon" type="image/svg+xml" href='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%231e3a8a"/><text x="50" y="74" font-family="Arial Black,sans-serif" font-size="72" font-weight="900" text-anchor="middle" fill="white">G</text></svg>'>
+<link rel="apple-touch-icon" href='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180"><rect width="180" height="180" fill="%231e3a8a"/><text x="90" y="135" font-family="Arial Black,sans-serif" font-size="130" font-weight="900" text-anchor="middle" fill="white">G</text></svg>'>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@300;400;500;700&family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --surface-2: #f4f6fb;
+    --border: #d4dbe6;
+    --border-bright: #a8b4c8;
+    --text: #0a1f44;
+    --text-dim: #3a4d6e;
+    --text-mute: #6e7c95;
+    --amber: #1e3a8a;
+    --amber-glow: #3b5fc4;
+    --good: #15803d;
+    --warn: #b45309;
+    --bad: #b91c1c;
+    --blue: #2563eb;
+    --red: #b91c1c;
+    --tick: #cbd5e1;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Kanit', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  body {
+    background:
+      radial-gradient(ellipse 700px 450px at top, rgba(30, 58, 138, 0.05) 0%, transparent 65%),
+      var(--bg);
+    min-height: 100vh;
+    background-attachment: fixed;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(30, 58, 138, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(30, 58, 138, 0.035) 1px, transparent 1px);
+    background-size: 24px 24px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 20px 16px 60px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* HEADER */
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+    margin-bottom: 22px;
+  }
+
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    font-family: 'Kanit', sans-serif;
+    font-weight: 400;
+    font-size: 11px;
+    color: var(--text-mute);
+    letter-spacing: 0.06em;
+  }
+
+  .header-top .pulse {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: var(--good);
+    border-radius: 50%;
+    margin-right: 8px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+
+  .logo-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 56px;
+    line-height: 0.85;
+    letter-spacing: 0.01em;
+    color: var(--text);
+  }
+
+  .logo .dot {
+    color: var(--amber);
+  }
+
+  .model-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    color: var(--amber);
+    border: 2px solid var(--amber);
+    padding: 5px 11px 4px;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+
+  .subtitle {
+    font-family: 'Kanit', sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    color: var(--text-dim);
+    letter-spacing: 0.02em;
+  }
+
+  /* TOGGLES */
+  .toggle-group {
+    margin-bottom: 22px;
+  }
+
+  .toggle {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 3px;
+    display: flex;
+  }
+
+  .toggle button {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    letter-spacing: 0.04em;
+    padding: 12px 0;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .toggle button.active {
+    background: var(--amber);
+    color: #ffffff;
+    font-weight: 700;
+  }
+
+  .toggle-meta {
+    font-family: 'Kanit', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-mute);
+    letter-spacing: 0.02em;
+    margin-top: 12px;
+    text-align: center;
+  }
+
+  /* SECTION LABEL */
+  .section-label {
+    font-family: 'Kanit', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--text-dim);
+    letter-spacing: 0.02em;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+  }
+
+  .section-label .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--amber);
+    margin-right: 12px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+    margin-left: 12px;
+  }
+
+  /* INPUTS */
+  .input-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+
+  .input-cell {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 14px 14px 12px;
+    position: relative;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .input-cell:focus-within {
+    border-color: var(--amber);
+    background: var(--surface-2);
+  }
+
+  .input-cell .label {
+    font-family: 'Kanit', sans-serif;
+    font-weight: 500;
+    font-size: 15px;
+    color: var(--text-dim);
+    letter-spacing: 0.01em;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dot-marker {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--tick);
+    flex-shrink: 0;
+  }
+
+  .input-cell.low .dot-marker { background: var(--blue); }
+  .input-cell.high .dot-marker { background: var(--red); }
+
+  .input-cell input {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 38px;
+    font-weight: 600;
+    width: 100%;
+    outline: none;
+    padding: 0;
+    letter-spacing: 0.01em;
+  }
+
+  .input-cell input::placeholder {
+    color: var(--border-bright);
+    font-weight: 300;
+  }
+
+  .input-cell input::-webkit-outer-spin-button,
+  .input-cell input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .input-cell .unit {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--text-mute);
+    margin-top: 6px;
+    letter-spacing: 0.1em;
+  }
+
+  /* RESULTS */
+  .results {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .result-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    padding: 16px 16px 18px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .result-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: var(--tick);
+    transition: background 0.3s;
+  }
+
+  .result-card.good::before { background: var(--good); }
+  .result-card.warn::before { background: var(--warn); }
+  .result-card.bad::before { background: var(--bad); }
+
+  .result-label {
+    font-family: 'Kanit', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-dim);
+    letter-spacing: 0.02em;
+    margin-bottom: 8px;
+  }
+
+  .result-value-row {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+
+  .result-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 72px;
+    line-height: 0.85;
+    color: var(--text);
+    letter-spacing: 0.01em;
+  }
+
+  .result-value.placeholder {
+    color: var(--border-bright);
+  }
+
+  .result-deg {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: var(--text-dim);
+  }
+
+  .result-target {
+    font-family: 'Kanit', sans-serif;
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--text-mute);
+    margin-top: 10px;
+    letter-spacing: 0.02em;
+  }
+
+  .result-target .target-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    color: var(--text-dim);
+  }
+
+  /* RANGE BAR */
+  .range-bar {
+    margin-top: 12px;
+    height: 6px;
+    background: var(--bg);
+    position: relative;
+    border: 1px solid var(--border);
+    border-radius: 1px;
+  }
+
+  .target-zone {
+    position: absolute;
+    height: 100%;
+    top: 0;
+    background: rgba(21, 128, 61, 0.18);
+    border-left: 2px solid var(--good);
+    border-right: 2px solid var(--good);
+  }
+
+  .marker {
+    position: absolute;
+    width: 3px;
+    height: 14px;
+    top: -5px;
+    background: var(--amber);
+    transition: left 0.3s ease;
+    box-shadow: 0 0 4px rgba(30, 58, 138, 0.5);
+  }
+
+  /* DIAGNOSIS */
+  .diagnosis {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    padding: 18px 18px 20px;
+    margin-bottom: 14px;
+    position: relative;
+  }
+
+  .diagnosis::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 5px;
+    background: var(--tick);
+    transition: background 0.3s;
+  }
+
+  .diagnosis.good::before { background: var(--good); }
+  .diagnosis.warn::before { background: var(--warn); }
+  .diagnosis.bad::before { background: var(--bad); }
+
+  .diag-label {
+    font-family: 'Kanit', sans-serif;
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--text-mute);
+    letter-spacing: 0.02em;
+    margin-bottom: 8px;
+  }
+
+  .diag-status {
+    font-family: 'Kanit', sans-serif;
+    font-weight: 700;
+    font-size: 32px;
+    line-height: 1.1;
+    color: var(--text);
+    margin-bottom: 12px;
+    letter-spacing: 0.01em;
+  }
+
+  /* DIAG BREAKDOWN CHIPS */
+  .diag-breakdown {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 14px 0 16px;
+  }
+
+  .diag-chip {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 10px 12px;
+    border-left: 4px solid var(--tick);
+    transition: border-color 0.3s;
+  }
+
+  .diag-chip.good { border-left-color: var(--good); }
+  .diag-chip.warn { border-left-color: var(--warn); }
+  .diag-chip.bad  { border-left-color: var(--bad); }
+
+  .chip-label {
+    font-family: 'Kanit', sans-serif;
+    font-weight: 400;
+    font-size: 12px;
+    color: var(--text-mute);
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .chip-value {
+    font-family: 'Kanit', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--text);
+    display: block;
+  }
+
+  .diag-chip.good .chip-value { color: var(--good); }
+  .diag-chip.warn .chip-value { color: var(--warn); }
+  .diag-chip.bad  .chip-value { color: var(--bad); }
+
+  .diag-status.good { color: var(--good); }
+  .diag-status.warn { color: var(--warn); }
+  .diag-status.bad { color: var(--bad); }
+
+  .diag-recommend {
+    font-family: 'Kanit', sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  /* SAT TEMPS REFERENCE */
+  .sat-reference {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .sat-cell {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sat-cell .label {
+    font-family: 'Kanit', sans-serif;
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--text-mute);
+    letter-spacing: 0.01em;
+    margin-bottom: 4px;
+  }
+
+  .sat-cell .value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* RESET BUTTON */
+  .reset-btn {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-family: 'Kanit', sans-serif;
+    font-weight: 500;
+    font-size: 15px;
+    letter-spacing: 0.04em;
+    padding: 14px 0;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .reset-btn:hover, .reset-btn:active {
+    border-color: var(--amber);
+    color: var(--amber);
+    background: rgba(30, 58, 138, 0.06);
+  }
+
+  /* FOOTER NOTE */
+  .footer {
+    margin-top: 28px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-family: 'Kanit', sans-serif;
+    font-weight: 400;
+    font-size: 12px;
+    color: var(--text-mute);
+    letter-spacing: 0.01em;
+    line-height: 1.7;
+    text-align: center;
+  }
+
+  /* KEYBOARD ON MOBILE */
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-top">
+      <span><span class="pulse"></span>พร้อมใช้งาน</span>
+      <span id="timestamp">— : —</span>
+    </div>
+    <div class="logo-row">
+      <div class="logo">GOODTEMP<span class="dot">.</span></div>
+      <div class="model-tag">TUNER</div>
+    </div>
+    <div class="subtitle">ตรวจระบบ ซับคูล / ซุปเปอร์ฮีต</div>
+  </div>
+
+  <!-- TOGGLES -->
+  <div class="toggle-group">
+    <div class="toggle" id="refrigerant-toggle">
+      <button class="active" data-value="r134a">R-134a</button>
+      <button data-value="r404a">R-404A</button>
+    </div>
+    <div class="toggle-meta" id="application-context">แอร์รถยนต์</div>
+  </div>
+
+  <!-- INPUTS -->
+  <div class="section-label"><span class="num">01</span>ค่าจากเกจ์</div>
+  <div class="input-grid">
+    <div class="input-cell low">
+      <div class="label"><span class="dot-marker"></span>ฝั่งต่ำ (LP)</div>
+      <input type="number" inputmode="decimal" id="lowPsi" placeholder="0" step="any" />
+      <div class="unit">PSI</div>
+    </div>
+    <div class="input-cell high">
+      <div class="label"><span class="dot-marker"></span>ฝั่งสูง (HP)</div>
+      <input type="number" inputmode="decimal" id="highPsi" placeholder="0" step="any" />
+      <div class="unit">PSI</div>
+    </div>
+  </div>
+
+  <div class="section-label"><span class="num">02</span>อุณหภูมิทางออก</div>
+  <div class="input-grid">
+    <div class="input-cell low">
+      <div class="label"><span class="dot-marker"></span>ออกคอยล์เย็น</div>
+      <input type="number" inputmode="decimal" id="evapTemp" placeholder="0" step="any" />
+      <div class="unit" id="evapUnit">°C</div>
+    </div>
+    <div class="input-cell high">
+      <div class="label"><span class="dot-marker"></span>ออกคอยล์ร้อน</div>
+      <input type="number" inputmode="decimal" id="condTemp" placeholder="0" step="any" />
+      <div class="unit" id="condUnit">°C</div>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="section-label"><span class="num">03</span>ค่าที่คำนวณ</div>
+  <div class="results">
+    <div class="result-card" id="superheatCard">
+      <div class="result-label">ซุปเปอร์ฮีต (SH)</div>
+      <div class="result-value-row">
+        <span class="result-value placeholder" id="superheatValue">— —</span>
+        <span class="result-deg" id="superheatDeg">°C</span>
+      </div>
+      <div class="result-target">เป้า <span class="target-val" id="superheatTarget">4–8°C</span></div>
+      <div class="range-bar">
+        <div class="target-zone" id="superheatZone"></div>
+        <div class="marker" id="superheatMarker" style="left: -10px;"></div>
+      </div>
+    </div>
+    <div class="result-card" id="subcoolCard">
+      <div class="result-label">ซับคูล (SC)</div>
+      <div class="result-value-row">
+        <span class="result-value placeholder" id="subcoolValue">— —</span>
+        <span class="result-deg" id="subcoolDeg">°C</span>
+      </div>
+      <div class="result-target">เป้า <span class="target-val" id="subcoolTarget">5–11°C</span></div>
+      <div class="range-bar">
+        <div class="target-zone" id="subcoolZone"></div>
+        <div class="marker" id="subcoolMarker" style="left: -10px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SATURATION REFERENCE -->
+  <div class="sat-reference">
+    <div class="sat-cell">
+      <div class="label">อุณหภูมิอิ่มตัว LP</div>
+      <div class="value" id="lowSat">—</div>
+    </div>
+    <div class="sat-cell">
+      <div class="label">อุณหภูมิอิ่มตัว HP</div>
+      <div class="value" id="highSat">—</div>
+    </div>
+  </div>
+
+  <!-- DIAGNOSIS -->
+  <div class="section-label"><span class="num">04</span>วิเคราะห์อาการ</div>
+  <div class="diagnosis" id="diagnosis">
+    <div class="diag-label">สถานะระบบ</div>
+    <div class="diag-status" id="diagStatus">รอใส่ค่า</div>
+
+    <div class="diag-breakdown">
+      <div class="diag-chip" id="chargeChip">
+        <span class="chip-label">น้ำยา (จาก SC)</span>
+        <span class="chip-value">—</span>
+      </div>
+      <div class="diag-chip" id="valveChip">
+        <span class="chip-label">วาล์ว TXV (จาก SH)</span>
+        <span class="chip-value">—</span>
+      </div>
+    </div>
+
+    <div class="diag-recommend" id="diagRecommend">ฝั่งต่ำ (LP + คอยล์เย็น) → เช็ควาล์ว • ฝั่งสูง (HP + คอยล์ร้อน) → เช็คน้ำยา • ใส่ฝั่งใดฝั่งหนึ่งก็ได้</div>
+  </div>
+
+  <button class="reset-btn" id="resetBtn">ล้างค่าทั้งหมด</button>
+
+  <div class="footer">
+    เครื่องมือช่วยวิเคราะห์ ตรวจสอบกับสเปคจริงเสมอ<br>
+    ค่า PT เป็นค่าประมาณ ค่าเป้าขึ้นกับระบบ
+  </div>
+</div>
+
+<script>
+  // ============================================================
+  // PT (Pressure-Temperature) CHARTS — psig → °F saturation temp
+  // ============================================================
+
+  // R-134a saturation curve — verified against DuPont/Chemours PT chart
+  // [psig, °F]
+  const R134A_PT = [
+    [0, -15], [5, -3], [10, 7], [15, 15], [20, 22], [25, 28],
+    [30, 34], [35, 40], [40, 45], [45, 49], [50, 54], [55, 58],
+    [60, 62], [65, 66], [70, 69], [75, 72], [80, 76], [85, 79],
+    [90, 82], [95, 85], [100, 88], [110, 93], [120, 98], [130, 103],
+    [140, 107], [150, 112], [160, 116], [170, 120], [180, 124],
+    [190, 127], [200, 130], [210, 134], [220, 137], [230, 140],
+    [240, 143], [250, 146], [260, 149], [270, 152], [280, 155],
+    [290, 158], [300, 161], [320, 167], [340, 172], [360, 177],
+    [380, 181], [400, 184]
+  ];
+
+  // R-404A saturation curve — verified against Bitzer/DuPont/Chemours data
+  // (cross-checked with NIST REFPROP-based references; small ~0.5°F glide
+  // treated as negligible for field diagnosis)
+  // [psig, °F]
+  const R404A_PT = [
+    [0, -51], [5, -39], [10, -30], [15, -22], [20, -15], [25, -9],
+    [30, -3], [35, 2], [40, 7], [45, 11], [50, 15], [55, 19],
+    [60, 23], [65, 27], [70, 30], [75, 33], [80, 36], [85, 40],
+    [90, 42], [95, 45], [100, 48], [105, 51], [110, 53], [115, 56],
+    [120, 58], [125, 60], [130, 63], [140, 67], [150, 71], [160, 75],
+    [170, 79], [180, 82], [190, 86], [200, 89], [210, 92], [220, 96],
+    [230, 99], [240, 101], [250, 104], [260, 107], [270, 110], [280, 113],
+    [290, 115], [300, 118], [320, 122], [340, 127], [360, 132], [380, 136],
+    [400, 140], [420, 144], [440, 148], [460, 151], [480, 155], [500, 159]
+  ];
+
+  // ============================================================
+  // REFRIGERANT CONFIG
+  // ============================================================
+  const REFRIGERANTS = {
+    r134a: {
+      pt: R134A_PT,
+      app: 'แอร์รถยนต์',
+      // Targets in °C
+      shTarget: [4, 8],   // superheat target range
+      scTarget: [5, 11],  // subcool target range
+      // Range-bar scale max for marker position (in °C)
+      shMax: 25,
+      scMax: 25,
+    },
+    r404a: {
+      pt: R404A_PT,
+      app: 'รถห้องเย็น',
+      shTarget: [4, 8],
+      scTarget: [3, 8],
+      shMax: 25,
+      scMax: 25,
+    },
+  };
+
+  // ============================================================
+  // STATE
+  // ============================================================
+  const state = {
+    refrigerant: 'r134a',
+    lowPsi: null,
+    highPsi: null,
+    evapTemp: null,  // always in °C
+    condTemp: null,  // always in °C
+  };
+
+  // ============================================================
+  // CONVERSION HELPERS
+  // ============================================================
+  const FtoC = f => (f - 32) * 5 / 9;
+  const CtoF = c => c * 9 / 5 + 32;
+  const dFtoC = df => df * 5 / 9;  // delta temp conversion
+
+  // ============================================================
+  // PT INTERPOLATION
+  // ============================================================
+  function pressureToSatTempF(psig, refrigerant) {
+    const chart = REFRIGERANTS[refrigerant].pt;
+    if (psig <= chart[0][0]) {
+      // Extrapolate below: use first two points
+      const [p0, t0] = chart[0];
+      const [p1, t1] = chart[1];
+      const slope = (t1 - t0) / (p1 - p0);
+      return t0 + slope * (psig - p0);
+    }
+    if (psig >= chart[chart.length - 1][0]) {
+      return chart[chart.length - 1][1];
+    }
+    for (let i = 0; i < chart.length - 1; i++) {
+      if (psig >= chart[i][0] && psig <= chart[i + 1][0]) {
+        const ratio = (psig - chart[i][0]) / (chart[i + 1][0] - chart[i][0]);
+        return chart[i][1] + ratio * (chart[i + 1][1] - chart[i][1]);
+      }
+    }
+    return null;
+  }
+
+  // ============================================================
+  // DOM REFS
+  // ============================================================
+  const els = {
+    lowPsi: document.getElementById('lowPsi'),
+    highPsi: document.getElementById('highPsi'),
+    evapTemp: document.getElementById('evapTemp'),
+    condTemp: document.getElementById('condTemp'),
+    evapUnit: document.getElementById('evapUnit'),
+    condUnit: document.getElementById('condUnit'),
+    superheatValue: document.getElementById('superheatValue'),
+    superheatDeg: document.getElementById('superheatDeg'),
+    superheatTarget: document.getElementById('superheatTarget'),
+    superheatCard: document.getElementById('superheatCard'),
+    superheatMarker: document.getElementById('superheatMarker'),
+    superheatZone: document.getElementById('superheatZone'),
+    subcoolValue: document.getElementById('subcoolValue'),
+    subcoolDeg: document.getElementById('subcoolDeg'),
+    subcoolTarget: document.getElementById('subcoolTarget'),
+    subcoolCard: document.getElementById('subcoolCard'),
+    subcoolMarker: document.getElementById('subcoolMarker'),
+    subcoolZone: document.getElementById('subcoolZone'),
+    lowSat: document.getElementById('lowSat'),
+    highSat: document.getElementById('highSat'),
+    diagStatus: document.getElementById('diagStatus'),
+    diagRecommend: document.getElementById('diagRecommend'),
+    diagnosis: document.getElementById('diagnosis'),
+    chargeChip: document.getElementById('chargeChip'),
+    valveChip: document.getElementById('valveChip'),
+    appContext: document.getElementById('application-context'),
+    timestamp: document.getElementById('timestamp'),
+  };
+
+  // ============================================================
+  // TOGGLE WIRING
+  // ============================================================
+  document.querySelectorAll('#refrigerant-toggle button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#refrigerant-toggle button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.refrigerant = btn.dataset.value;
+      els.appContext.textContent = REFRIGERANTS[state.refrigerant].app;
+      update();
+    });
+  });
+
+  // Input listeners
+  ['lowPsi', 'highPsi', 'evapTemp', 'condTemp'].forEach(key => {
+    els[key].addEventListener('input', () => {
+      const v = els[key].value;
+      state[key] = v === '' ? null : parseFloat(v);
+      update();
+    });
+  });
+
+  // Reset
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    ['lowPsi', 'highPsi', 'evapTemp', 'condTemp'].forEach(key => {
+      els[key].value = '';
+      state[key] = null;
+    });
+    update();
+  });
+
+  // ============================================================
+  // DIAGNOSIS LOGIC
+  // SC (subcool) → ปริมาณน้ำยา (charge level)
+  // SH (superheat) → อาการวาล์ว TXV (valve operation)
+  // ============================================================
+  function diagnose(sh, sc, shTarget, scTarget) {
+    const TOL = 1.5; // °C tolerance beyond target before flagging "bad"
+
+    const c = classify(sc, scTarget, TOL); // charge state from subcool
+    const v = classify(sh, shTarget, TOL); // valve state from superheat
+
+    // Charge breakdown chip
+    let chargeLevel, chargeText;
+    if (c <= -2)      { chargeLevel = 'bad';  chargeText = 'ขาด'; }
+    else if (c === -1){ chargeLevel = 'warn'; chargeText = 'น้อย'; }
+    else if (c === 0) { chargeLevel = 'good'; chargeText = 'พอดี'; }
+    else if (c === 1) { chargeLevel = 'warn'; chargeText = 'มาก'; }
+    else              { chargeLevel = 'bad';  chargeText = 'เกิน'; }
+
+    // Valve breakdown chip
+    let valveLevel, valveText;
+    if (v <= -2)      { valveLevel = 'bad';  valveText = 'เปิดเกิน'; }
+    else if (v === -1){ valveLevel = 'warn'; valveText = 'เปิดมาก'; }
+    else if (v === 0) { valveLevel = 'good'; valveText = 'ปกติ'; }
+    else if (v === 1) { valveLevel = 'warn'; valveText = 'เปิดน้อย'; }
+    else              { valveLevel = 'bad';  valveText = 'เปิดน้อยไป'; }
+
+    // Overall status & message
+    let level, status, message;
+
+    // All normal
+    if (c === 0 && v === 0) {
+      level = 'good';
+      status = 'ระบบปกติ';
+      message = 'น้ำยาพอดี วาล์วทำงานถูกต้อง ไม่ต้องปรับน้ำยาหรือวาล์ว';
+    }
+    // Both high → restriction (น้ำยาไหลผ่านไม่ได้)
+    else if (c > 0 && v > 0) {
+      level = 'bad';
+      status = 'ระบบอุดตัน';
+      message = 'SC สูง + SH สูง → น้ำยาไหลไม่สะดวก ตรวจไส้กรองดรายเออร์ ท่อน้ำยาเหลว และวาล์ว TXV ว่ามีจุดอุดตันไหม';
+    }
+    // Both low → compressor weak or TXV stuck open
+    else if (c < 0 && v < 0) {
+      level = 'bad';
+      status = 'คอมพ์อ่อน หรือ TXV เสีย';
+      message = 'SC ต่ำ + SH ต่ำ → คอมเพรสเซอร์อาจอ่อนกำลัง หรือวาล์ว TXV ค้างเปิด ตรวจคอมพ์และวาล์ว TXV';
+    }
+    // Classic undercharge: low SC + high SH
+    else if (c < 0 && v > 0) {
+      const severe = c <= -2 || v >= 2;
+      level = severe ? 'bad' : 'warn';
+      status = severe ? 'น้ำยาขาด' : 'น้ำยาน้อย';
+      message = severe
+        ? 'SC ต่ำ + SH สูง → น้ำยาขาดชัดเจน เติมน้ำยาทีละน้อย จน SC ขึ้นถึงเป้า'
+        : 'น้ำยาขาดเล็กน้อย เติมน้ำยานิดหน่อยแล้วเช็คใหม่';
+    }
+    // Classic overcharge: high SC + low SH
+    else if (c > 0 && v < 0) {
+      const severe = c >= 2 || v <= -2;
+      level = severe ? 'bad' : 'warn';
+      status = severe ? 'น้ำยาเกิน' : 'น้ำยามากกว่าเป้า';
+      message = severe
+        ? 'SC สูง + SH ต่ำ → น้ำยาเกินชัดเจน ดูดน้ำยาออกทีละน้อย จน SC ลงถึงเป้า'
+        : 'น้ำยาเกินเล็กน้อย ดูดน้ำยาออกนิดหน่อยแล้วเช็คใหม่';
+    }
+    // Charge issue only (valve OK)
+    else if (c !== 0 && v === 0) {
+      if (c < 0) {
+        level = c <= -2 ? 'bad' : 'warn';
+        status = c <= -2 ? 'น้ำยาขาด' : 'น้ำยาน้อย';
+        message = 'SC ต่ำกว่าเป้า → ปริมาณน้ำยาไม่พอ เติมน้ำยาทีละน้อย จน SC อยู่ในเป้า';
+      } else {
+        level = c >= 2 ? 'bad' : 'warn';
+        status = c >= 2 ? 'น้ำยาเกิน' : 'น้ำยามากกว่าเป้า';
+        message = 'SC สูงกว่าเป้า → น้ำยาเกิน ดูดน้ำยาออกทีละน้อย จน SC อยู่ในเป้า';
+      }
+    }
+    // Valve issue only (charge OK)
+    else { // c === 0 && v !== 0
+      if (v < 0) {
+        level = v <= -2 ? 'bad' : 'warn';
+        status = v <= -2 ? 'วาล์ว TXV เปิดเกิน' : 'วาล์ว TXV เปิดมากนิดหน่อย';
+        message = 'น้ำยาพอดี แต่ SH ต่ำ → วาล์ว TXV ปล่อยน้ำยาเข้าคอยล์เย็นมากเกิน ปรับวาล์วให้เปิดน้อยลง';
+      } else {
+        level = v >= 2 ? 'bad' : 'warn';
+        status = v >= 2 ? 'วาล์ว TXV เปิดน้อยไป' : 'วาล์ว TXV เปิดน้อยนิดหน่อย';
+        message = 'น้ำยาพอดี แต่ SH สูง → วาล์ว TXV ปล่อยน้ำยาเข้าคอยล์เย็นน้อยไป ปรับวาล์วให้เปิดมากขึ้น';
+      }
+    }
+
+    return { level, status, message, chargeLevel, chargeText, valveLevel, valveText };
+  }
+
+  // ============================================================
+  // PARTIAL DIAGNOSIS — เมื่อใส่ค่าฝั่งเดียว
+  // ============================================================
+  function classify(v, t, TOL) {
+    if (v < t[0] - TOL) return -2;
+    if (v < t[0]) return -1;
+    if (v > t[1] + TOL) return 2;
+    if (v > t[1]) return 1;
+    return 0;
+  }
+
+  // วินิจฉัยจาก SH อย่างเดียว (ฝั่งต่ำ) — บอกอาการวาล์ว TXV
+  function diagnoseValveOnly(sh, shTarget) {
+    const v = classify(sh, shTarget, 1.5);
+
+    let valveLevel, valveText;
+    if (v <= -2)      { valveLevel = 'bad';  valveText = 'เปิดเกิน'; }
+    else if (v === -1){ valveLevel = 'warn'; valveText = 'เปิดมาก'; }
+    else if (v === 0) { valveLevel = 'good'; valveText = 'ปกติ'; }
+    else if (v === 1) { valveLevel = 'warn'; valveText = 'เปิดน้อย'; }
+    else              { valveLevel = 'bad';  valveText = 'เปิดน้อยไป'; }
+
+    let level, status, message;
+    if (v === 0) {
+      level = 'good';
+      status = 'วาล์ว TXV ปกติ';
+      message = 'SH อยู่ในเป้า → วาล์วทำงานถูกต้อง • ใส่ค่าฝั่งสูงเพิ่มเพื่อเช็คน้ำยาด้วย';
+    } else if (v < 0) {
+      level = v <= -2 ? 'bad' : 'warn';
+      status = v <= -2 ? 'วาล์ว TXV เปิดเกิน' : 'วาล์ว TXV เปิดมากนิดหน่อย';
+      message = 'SH ต่ำกว่าเป้า → วาล์วปล่อยน้ำยาเข้าคอยล์เย็นมากเกิน ปรับวาล์วให้เปิดน้อยลง • ใส่ค่าฝั่งสูงเพิ่มเพื่อยืนยันว่าน้ำยาไม่ได้เกิน';
+    } else {
+      level = v >= 2 ? 'bad' : 'warn';
+      status = v >= 2 ? 'วาล์ว TXV เปิดน้อยไป' : 'วาล์ว TXV เปิดน้อยนิดหน่อย';
+      message = 'SH สูงกว่าเป้า → วาล์วปล่อยน้ำยาเข้าน้อยไป ปรับวาล์วให้เปิดมากขึ้น • ระวัง: SH สูงอาจเพราะน้ำยาขาด ใส่ค่าฝั่งสูงเพิ่มเพื่อยืนยัน';
+    }
+
+    return {
+      level, status, message,
+      chargeLevel: null, chargeText: '—',
+      valveLevel, valveText,
+    };
+  }
+
+  // วินิจฉัยจาก SC อย่างเดียว (ฝั่งสูง) — บอกปริมาณน้ำยา
+  function diagnoseChargeOnly(sc, scTarget) {
+    const c = classify(sc, scTarget, 1.5);
+
+    let chargeLevel, chargeText;
+    if (c <= -2)      { chargeLevel = 'bad';  chargeText = 'ขาด'; }
+    else if (c === -1){ chargeLevel = 'warn'; chargeText = 'น้อย'; }
+    else if (c === 0) { chargeLevel = 'good'; chargeText = 'พอดี'; }
+    else if (c === 1) { chargeLevel = 'warn'; chargeText = 'มาก'; }
+    else              { chargeLevel = 'bad';  chargeText = 'เกิน'; }
+
+    let level, status, message;
+    if (c === 0) {
+      level = 'good';
+      status = 'น้ำยาพอดี';
+      message = 'SC อยู่ในเป้า → ปริมาณน้ำยาพอดี • ใส่ค่าฝั่งต่ำเพิ่มเพื่อเช็ควาล์วด้วย';
+    } else if (c < 0) {
+      level = c <= -2 ? 'bad' : 'warn';
+      status = c <= -2 ? 'น้ำยาขาด' : 'น้ำยาน้อย';
+      message = 'SC ต่ำกว่าเป้า → น้ำยาน้อย เติมน้ำยาทีละน้อย จน SC ขึ้นถึงเป้า • ใส่ค่าฝั่งต่ำเพิ่มเพื่อเช็ควาล์วด้วย';
+    } else {
+      level = c >= 2 ? 'bad' : 'warn';
+      status = c >= 2 ? 'น้ำยาเกิน' : 'น้ำยามาก';
+      message = 'SC สูงกว่าเป้า → น้ำยาเกิน ดูดน้ำยาออกทีละน้อย จน SC ลงถึงเป้า • ใส่ค่าฝั่งต่ำเพิ่มเพื่อเช็ควาล์วด้วย';
+    }
+
+    return {
+      level, status, message,
+      chargeLevel, chargeText,
+      valveLevel: null, valveText: '—',
+    };
+  }
+
+  // ============================================================
+  // RENDER
+  // ============================================================
+  function update() {
+    const cfg = REFRIGERANTS[state.refrigerant];
+
+    // Update target labels (always shown, always °C)
+    els.superheatTarget.textContent = `${cfg.shTarget[0]}–${cfg.shTarget[1]}°C`;
+    els.subcoolTarget.textContent = `${cfg.scTarget[0]}–${cfg.scTarget[1]}°C`;
+
+    // Render target zones on range bars
+    const shZoneLeft = (cfg.shTarget[0] / cfg.shMax) * 100;
+    const shZoneRight = (cfg.shTarget[1] / cfg.shMax) * 100;
+    els.superheatZone.style.left = shZoneLeft + '%';
+    els.superheatZone.style.width = (shZoneRight - shZoneLeft) + '%';
+
+    const scZoneLeft = (cfg.scTarget[0] / cfg.scMax) * 100;
+    const scZoneRight = (cfg.scTarget[1] / cfg.scMax) * 100;
+    els.subcoolZone.style.left = scZoneLeft + '%';
+    els.subcoolZone.style.width = (scZoneRight - scZoneLeft) + '%';
+
+    // Compute saturation temps (chart returns °F, we display in °C)
+    let lowSatF = null, highSatF = null;
+    if (state.lowPsi !== null && !isNaN(state.lowPsi)) {
+      lowSatF = pressureToSatTempF(state.lowPsi, state.refrigerant);
+    }
+    if (state.highPsi !== null && !isNaN(state.highPsi)) {
+      highSatF = pressureToSatTempF(state.highPsi, state.refrigerant);
+    }
+
+    // Display sat temps in °C
+    els.lowSat.textContent = lowSatF !== null ? FtoC(lowSatF).toFixed(1) + '°C' : '—';
+    els.highSat.textContent = highSatF !== null ? FtoC(highSatF).toFixed(1) + '°C' : '—';
+
+    // Determine which sides have full data
+    const hasLowSide = lowSatF !== null &&
+                       state.evapTemp !== null && !isNaN(state.evapTemp);
+    const hasHighSide = highSatF !== null &&
+                        state.condTemp !== null && !isNaN(state.condTemp);
+
+    // Compute SH (superheat) if low side data complete
+    let superheatC = null;
+    if (hasLowSide) {
+      const evapTempF = CtoF(state.evapTemp);
+      superheatC = dFtoC(evapTempF - lowSatF);
+
+      els.superheatValue.textContent = superheatC.toFixed(1);
+      els.superheatValue.classList.remove('placeholder');
+      const shPct = clamp((superheatC / cfg.shMax) * 100, 0, 100);
+      els.superheatMarker.style.left = shPct + '%';
+      setCardStatus(els.superheatCard, evalSingle(superheatC, cfg.shTarget));
+    } else {
+      els.superheatValue.textContent = '— —';
+      els.superheatValue.classList.add('placeholder');
+      els.superheatCard.classList.remove('good', 'warn', 'bad');
+      els.superheatMarker.style.left = '-10px';
+    }
+
+    // Compute SC (subcool) if high side data complete
+    let subcoolC = null;
+    if (hasHighSide) {
+      const condTempF = CtoF(state.condTemp);
+      subcoolC = dFtoC(highSatF - condTempF);
+
+      els.subcoolValue.textContent = subcoolC.toFixed(1);
+      els.subcoolValue.classList.remove('placeholder');
+      const scPct = clamp((subcoolC / cfg.scMax) * 100, 0, 100);
+      els.subcoolMarker.style.left = scPct + '%';
+      setCardStatus(els.subcoolCard, evalSingle(subcoolC, cfg.scTarget));
+    } else {
+      els.subcoolValue.textContent = '— —';
+      els.subcoolValue.classList.add('placeholder');
+      els.subcoolCard.classList.remove('good', 'warn', 'bad');
+      els.subcoolMarker.style.left = '-10px';
+    }
+
+    // Choose diagnosis mode based on available data
+    let diag;
+    if (hasLowSide && hasHighSide) {
+      diag = diagnose(superheatC, subcoolC, cfg.shTarget, cfg.scTarget);
+    } else if (hasLowSide) {
+      diag = diagnoseValveOnly(superheatC, cfg.shTarget);
+    } else if (hasHighSide) {
+      diag = diagnoseChargeOnly(subcoolC, cfg.scTarget);
+    } else {
+      // No complete data — reset diagnosis area
+      els.diagStatus.textContent = 'รอใส่ค่า';
+      els.diagStatus.classList.remove('good', 'warn', 'bad');
+      els.diagRecommend.textContent = 'ฝั่งต่ำ (LP + คอยล์เย็น) → เช็ควาล์ว • ฝั่งสูง (HP + คอยล์ร้อน) → เช็คน้ำยา • ใส่ฝั่งใดฝั่งหนึ่งก็ได้';
+      els.diagnosis.classList.remove('good', 'warn', 'bad');
+      els.chargeChip.classList.remove('good', 'warn', 'bad');
+      els.chargeChip.querySelector('.chip-value').textContent = '—';
+      els.valveChip.classList.remove('good', 'warn', 'bad');
+      els.valveChip.querySelector('.chip-value').textContent = '—';
+      updateTimestamp();
+      return;
+    }
+
+    // Render diagnosis
+    els.diagStatus.textContent = diag.status;
+    els.diagStatus.classList.remove('good', 'warn', 'bad');
+    els.diagStatus.classList.add(diag.level);
+    els.diagRecommend.textContent = diag.message;
+    els.diagnosis.classList.remove('good', 'warn', 'bad');
+    els.diagnosis.classList.add(diag.level);
+
+    // Update breakdown chips (chargeLevel/valveLevel may be null in partial mode)
+    els.chargeChip.classList.remove('good', 'warn', 'bad');
+    if (diag.chargeLevel) els.chargeChip.classList.add(diag.chargeLevel);
+    els.chargeChip.querySelector('.chip-value').textContent = diag.chargeText;
+
+    els.valveChip.classList.remove('good', 'warn', 'bad');
+    if (diag.valveLevel) els.valveChip.classList.add(diag.valveLevel);
+    els.valveChip.querySelector('.chip-value').textContent = diag.valveText;
+
+    updateTimestamp();
+  }
+
+  function evalSingle(value, target) {
+    const TOL = 1.5;
+    if (value < target[0] - TOL || value > target[1] + TOL) return 'bad';
+    if (value < target[0] || value > target[1]) return 'warn';
+    return 'good';
+  }
+
+  function setCardStatus(card, level) {
+    card.classList.remove('good', 'warn', 'bad');
+    card.classList.add(level);
+  }
+
+  function clamp(v, min, max) {
+    return Math.max(min, Math.min(max, v));
+  }
+
+  function updateTimestamp() {
+    const d = new Date();
+    const hh = d.getHours().toString().padStart(2, '0');
+    const mm = d.getMinutes().toString().padStart(2, '0');
+    els.timestamp.textContent = `${hh} : ${mm}`;
+  }
+
+  // INIT
+  update();
+  setInterval(updateTimestamp, 30000);
+</script>
+</body>
+</html>
